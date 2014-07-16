@@ -1,1 +1,29 @@
-Make have_green_funcs = .false. for the first run. 
+patrick_corrected_binary
+========================
+//Kundan Kadam July 16 2014
+
+Purpose:
+1. Creates a corotating polytropic binary system in cylindrical coordinates.
+3. The output can be used in hydrodynamics code as initial model.
+
+Required:
+1. Nothing except reasonable guesses of the boundaries A, B, C the binary system.
+   A = Outer edge of the primary
+   B = Inner edge of the primary
+   C = Inner edge of the secondary
+   Specified in file init, starting second number, second line.
+   Also the central densities, right after C.
+2. Other needed parameters are specified in runscf.h file.
+   
+How to use:
+1. For the very first run with given resolution, make sure that in main.F90, have_green_funcs = .false.
+   This can be changed to .true. for later runs with the same resolutions for a faster runtime.
+2. Do:
+   >> make clean
+   >> make
+   >> ./scf
+   
+Note:
+Code is also known as corrected SCF code. The very first attempt at creating biplytropic binary
+had some issues with convergence. Patrick Motl provided me with this version of SCF which used 
+different Poisson solver, and it works.
