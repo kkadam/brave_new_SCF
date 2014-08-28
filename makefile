@@ -10,14 +10,14 @@ OFILES= $(F90FILES:.f90=.o) $(F90_SAFE_FILES:.F90=.o)
 
 hydro:$(OFILES)
 # normal linking step
-	ifort -O3 -g -check all -o scf $(OFILES)
+	ifort -traceback -O3 -o scf -fpe0 $(OFILES)
 
 
 $(OFILES): runscf.h
 
 .f90.o: runscf.h
 # normal compilation
-	ifort -c -O3 -g -check all -r8 $<
+	ifort -traceback -c -O3 -r8 -fpe0 $<
 
 
 clean:

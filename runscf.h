@@ -2,24 +2,22 @@
        integer, parameter :: numz = 130
        integer, parameter :: numphi = 256
 
-!       integer, parameter :: numr_procs = 4
-!       integer, parameter :: numz_procs = 4
+       integer, parameter :: numr_procs = 1
+       integer, parameter :: numz_procs = 1
 
-!       integer, parameter :: numr_dd = ( (numr - 2)/numr_procs ) + 2
+       integer, parameter :: numr_dd = ( (numr - 2)/numr_procs ) + 2
 
-!       integer, parameter :: numz_dd = ( (numz - 2)/numz_procs ) + 2
+       integer, parameter :: numz_dd = ( (numz - 2)/numz_procs ) + 2
 
-!       integer, parameter :: rlwb = 2, rupb = numr_dd - 1
-       integer, parameter :: rlwb = 2, rupb = numr - 1
+       integer, parameter :: rlwb = 2, rupb = numr_dd - 1
 
-!       integer, parameter :: zlwb = 2, zupb = numz_dd - 1
-       integer, parameter :: zlwb = 2, zupb = numz - 1
+       integer, parameter :: zlwb = 2, zupb = numz_dd - 1
 
        integer, parameter :: philwb = 1, phiupb = numphi
 
-!       integer, parameter :: numr_dd_z = (numr-2)/numz_procs + 2
+       integer, parameter :: numr_dd_z = (numr-2)/numz_procs + 2
 
-!       integer, parameter :: numphi_dd = numphi/numr_procs
+       integer, parameter :: numphi_dd = numphi/numr_procs
 
        integer, parameter :: numphi_by_two = numphi / 2
 
@@ -27,7 +25,7 @@
 
        real, parameter :: numphiinv = 1.0 / numphi
 
-       integer, parameter :: maxit = 1000
+       integer, parameter :: maxit = 100
 
 ! restrictions on the above parameters:
 !
