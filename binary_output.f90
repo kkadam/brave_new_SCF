@@ -150,7 +150,7 @@ integer :: louter1,  louter2
 
 integer :: phi1, phi2, phi3, phi4
 
-integer :: I, J, K
+integer :: I, J, K, L
 
 integer :: index
 
@@ -329,228 +329,138 @@ do K = philwb, phiupb
       enddo
    enddo
 enddo
-if  ( iam_on_axis ) then
-   rchpot(rlwb-1,:,:) = cshift(rchpot(rlwb,:,:),dim=2,shift=numphi/2)
-endif
 
-! find  the minimum value of the Rooche potential
-my_rchmin = 0.0
-do K = philwb, phiupb
-   do J = zlwb, zupb
+  do L = 1, numphi_by_two
+    do K = 1, numz
+      rchpot(rlwb-1,K,L)               = rchpot(rlwb,K,L+numphi_by_two) !wth?
+      rchpot(rlwb-1,K,L+numphi_by_two) = rho(rlwb,K,L)
+    enddo
+  enddo
+! find  the minimum value of the Roche potential  wth, can be fixed
+  rchmin = 0.0
+  do K = philwb, phiupb
+    do J = zlwb, zupb
       do I = rlwb, rupb
-         if ( rchpot(I,J,K) < my_rchmin ) then
-            my_rchmin = rchpot(I,J,K)
-            my_rminloc(1) = rhf(I)
-            my_rminloc(2) = zhf(J)
-            my_rminloc(3) = phi(K)
-         endif
+        if ( rchpot(I,J,K) < rchmin ) then
+           rchmin = rchpot(I,J,K)
+           rminloc(1) = rhf(I)
+           rminloc(2) = zhf(J)
+           rminloc(3) = phi(K)
+        endif
       enddo
-   enddo
-enddo
-if ( iam_root ) then
-   rchmin = my_rchmin
-   rminloc = my_rminloc
-!   do I = 1, numprocs-1
-!      call mpi_recv(temp_rch, 1, REAL_SIZE, I, 100+I, MPI_COMM_WORLD, istatus, ierror)
-!      call mpi_recv(temp_rch_loc, 3, REAL_SIZE, I, 200+I, MPI_COMM_WORLD, istatus, ierror)
-!      if ( temp_rch < my_rchmin ) then
-!         rchmin = temp_rch
-!         rminloc = temp_rch_loc
-!      endif
-!   enddo
-!else
-!    call mpi_send(my_rchmin, 1, REAL_SIZE, root, 100+iam, MPI_COMM_WORLD, ierror)
-!    call mpi_send(my_rminloc, 3, REAL_SIZE, root, 200+iam, MPI_COMM_WORLD, ierror)
-endif
+    enddo
+  enddo
 
 ! find the maximum value of the Roche potential
-my_rchmax = - 1.0e6
-do K = philwb, phiupb
-   do J = zlwb, zupb
+  rchmax = - 1.0e6
+  do K = philwb, phiupb
+    do J = zlwb, zupb
       do I = rlwb, rupb
-         if ( rchpot(I,J,K) > my_rchmax ) then
-             my_rchmax = rchpot(I,J,K)
-             my_rmaxloc(1) = rhf(I)
-             my_rmaxloc(2) = zhf(J)
-             my_rmaxloc(3) = phi(K)
-         endif
+        if ( rchpot(I,J,K) > rchmax ) then
+          rchmax = rchpot(I,J,K)
+          rmaxloc(1) = rhf(I)
+          rmaxloc(2) = zhf(J)
+          rmaxloc(3) = phi(K)
+        endif
       enddo
-   enddo
-enddo
-if ( iam_root ) then
-   rchmax = my_rchmax
-   rmaxloc = my_rmaxloc
-!   do I = 1, numprocs-1
-!      call mpi_recv(temp_rch, 1, REAL_SIZE, I, 100+I, MPI_COMM_WORLD, istatus, ierror)
-!      call mpi_recv(temp_rch_loc, 3, REAL_SIZE, I, 200+I, MPI_COMM_WORLD, istatus, ierror)
-!      if ( temp_rch > my_rchmax ) then
-!         rchmax = temp_rch
-!         rmaxloc = temp_rch_loc
-!      endif
-!   enddo
-!else
-!   call mpi_send(my_rchmax, 1, REAL_SIZE, root, 100+iam, MPI_COMM_WORLD, ierror)
-!   call mpi_send(my_rmaxloc, 3, REAL_SIZE, root, 200+iam, MPI_COMM_WORLD, ierror)
-endif
+    enddo
+  enddo
 
 ! find the location of the L1 point and the potenttial there
-if  ( iam_on_bottom ) then
-   flag = 0
-   isave = 0
-   xcrit = 1.0
-   rpotcrit = 1.0
-   do I = rupb, rlwb, -1
-      if ( rhf(I) < rhm2(1) ) then
-         rchtest = (rchpot(I,zlwb,phic) - rchpot(I+1,zlwb,phic)) * &
-                   (rchpot(I-1,zlwb,phic) - rchpot(I,zlwb,phic))
-         if ( rchtest < 0.0 ) then
-            curvature = rchpot(I+1,zlwb,phic) + rchpot(I-1,zlwb,phic) - 2.0 * rchpot(I,zlwb,phic)
-            if ( cuurvature < 0.0 ) then
-               xcrit = - rhf(I)
-               rpotcrit = rchpot(I,zlwb,phic)
-               isave = I
-               flag = 0
-            endif
+flag = 0
+isave = 0
+xcrit = 1.0
+rpotcrit = 1.0
+do I = rupb, rlwb, -1
+   if ( rhf(I) < rhm2(1) ) then
+      rchtest = (rchpot(I,zlwb,phic) - rchpot(I+1,zlwb,phic)) * &
+                (rchpot(I-1,zlwb,phic) - rchpot(I,zlwb,phic))
+      if ( rchtest < 0.0 ) then
+         curvature = rchpot(I+1,zlwb,phic) + rchpot(I-1,zlwb,phic) - 2.0 * rchpot(I,zlwb,phic)
+         if ( cuurvature < 0.0 ) then
+            xcrit = - rhf(I)
+            rpotcrit = rchpot(I,zlwb,phic)
+            isave = I
+            flag = 0
          endif
       endif
-   enddo
-   ! L1 is not on the -vw x axis if isave is zero
-   if ( isave == 0 ) then
-      do I = rlwb, rupb
-          if  ( rhf(I) < rhm1(1) ) then
-             rchtest = (rchpot(I+1,zlwb,phia) - rchpot(I,zlwb,phia)) * &
-                       (rchpot(I,zlwb,phia) - rchpot(I-1,zlwb,phia))
-             if ( rchtest < 0.0 ) then
-                curvature = rchpot(I+1,zlwb,phia) + rchpot(I-1,zlwb,phia) - 2.0 * rchpot(I,zlwb,phia)
-                if ( curvature < 0.0 ) then
-                  xcrit = rhf(I)
-                  rpotcrit = rchpot(I,zlwb,phia)
-                  isave = I
-                  flag = 1
-               endif
-             endif
-         endif
-      enddo
    endif
-else
-    ! L1 pointt does not resiide in my data
-    xcrit = 10.0
-    rpotcrit = 10.0
-endif
-!if ( iam_root ) then
-!   do I = 1, numprocs-1
-!      call mpi_recv(temp_xcrit, 1, REAL_SIZE, I, 100+I, MPI_COMM_WORLD, istatus, ierror)
-!      call mpi_recv(temp_rpotcrit, 1, REAL_SIZE, I, 200+I, MPI_COMM_WORLD, istatus, ierror)
-!      if ( temp_xcrit < 1.0 ) then
-!         xcrit = temp_xcrit
-!         rpotcrit = temp_rpotcrit
-!      endif
-!   enddo
-!   if ( xcrit >= 1.0 ) then
-!      ! the  L1 point  muust bbe on the axxis, in root's data
-!      xcrit = 0.0
-!      rpotcrit = 0.5 * ( rchpot(rlwb-1,zlwb,phia) + rchpot(rlwb,zlwb,phia) )
-!   endif
-!else
-!   call mpi_send(xcrit, 1, REAL_SIZE, root, 100+iam, MPI_COMM_WORLD, ierror)
-!   call mpi_send(rpotcrit, 1, REAL_SIZE, root, 200+iam, MPI_COMM_WORLD, ierror)
-!endif
-!call mpi_bcast(xcrit, 1, REAL_SIZE, root, MPI_COMM_WORLD, ierror)
-!call mpi_bcast(rpotcrit, 1, REAL_SIZE, root, MPI_COMM_WORLD, ierror)
-          
-! find the L2 and  L3 points if they are on the computational grid
-if ( iam_on_bottom ) then
-   l2loc = 0.0
-   l3loc = 0.0
+enddo
+! L1 is not on the -ve x axis if isave is zero
+if ( isave == 0 ) then
    do I = rlwb, rupb
-      if ( rhf(I) >  rhm1(1) ) then
+       if  ( rhf(I) < rhm1(1) ) then
           rchtest = (rchpot(I+1,zlwb,phia) - rchpot(I,zlwb,phia)) * &
                     (rchpot(I,zlwb,phia) - rchpot(I-1,zlwb,phia))
           if ( rchtest < 0.0 ) then
-             curvature = rchpot(I+1,zlwb,phia) + rchpot(I-1,zlwb,phia) - 2.0  * rchpot(I,zlwb,phia)
+             curvature = rchpot(I+1,zlwb,phia) + rchpot(I-1,zlwb,phia) - 2.0 * rchpot(I,zlwb,phia)
              if ( curvature < 0.0 ) then
-                 l2loc = rhf(I)
-                 exit
-             endif
+               xcrit = rhf(I)
+               rpotcrit = rchpot(I,zlwb,phia)
+               isave = I
+               flag = 1
+            endif
           endif
       endif
    enddo
-   do I = rlwb, rupb
-      if ( rhf(I) > rhm2(1) ) then
-         rchtest = (rchpot(I+1,zlwb,phic) - rchpot(I,zlwb,phic)) * &
-                   (rchpot(I,zlwb,phic) - rchpot(I-1,zlwb,phic))
-         if ( rchtest < 0.0 ) then
-            curvature = rchpot(I+1,zlwb,phic) + rchpot(I-1,zlwb,phic) - 2.0  * rchpot(I,zlwb,phic)
-            if ( curvature < 0.0 ) then
-               l3loc =  rhf(I)
-               exit
-            endif
+endif
+if ( isave == 0 ) then
+   ! the  L1 point  muust bbe on the axxis
+   xcrit = 0.0
+   rpotcrit = 0.5 * ( rchpot(rlwb-1,zlwb,phia) + rchpot(rlwb,zlwb,phia) )
+endif
+
+! find the L2 and  L3 points if they are on the computational grid
+l2loc = 0.0
+l3loc = 0.0
+do I = rlwb, rupb
+   if ( rhf(I) >  rhm1(1) ) then
+       rchtest = (rchpot(I+1,zlwb,phia) - rchpot(I,zlwb,phia)) * &
+                 (rchpot(I,zlwb,phia) - rchpot(I-1,zlwb,phia))
+       if ( rchtest < 0.0 ) then
+          curvature = rchpot(I+1,zlwb,phia) + rchpot(I-1,zlwb,phia) - 2.0  * rchpot(I,zlwb,phia)
+          if ( curvature < 0.0 ) then
+              l2loc = rhf(I)
+              exit
+          endif
+       endif
+   endif
+enddo
+do I = rlwb, rupb
+   if ( rhf(I) > rhm2(1) ) then
+      rchtest = (rchpot(I+1,zlwb,phic) - rchpot(I,zlwb,phic)) * &
+                (rchpot(I,zlwb,phic) - rchpot(I-1,zlwb,phic))
+      if ( rchtest < 0.0 ) then
+         curvature = rchpot(I+1,zlwb,phic) + rchpot(I-1,zlwb,phic) - 2.0  * rchpot(I,zlwb,phic)
+         if ( curvature < 0.0 ) then
+            l3loc =  rhf(I)
+            exit
          endif
       endif
-   enddo
-else
-   l2loc = 0.0
-   l3loc = 0.0
-endif
-!if ( iam_root ) then 
-!   do I = 1, numprocs-1
-!      call mpi_recv(temp_l2loc, 1, REAL_SIZE, I, 100+I, MPI_COMM_WORLD, istatus, ierror)
-!      call mpi_recv(temp_l3loc, 1, REAL_SIZE, I, 200+I, MPI_COMM_WORLD, istatus, ierror)
-!      if ( temp_l2loc > 0.0 ) then
-!          l2loc = temp_l2loc
-!      endif
-!      if ( temp_l3loc > 0.0 ) then
-!         l3loc = temp_l3loc
-!      endif
-!   enddo
-!else
-!   call mpi_send(l2loc, 1, REAL_SIZE, root, 100+iam, MPI_COMM_WORLD, ierror)
-!   call mpi_send(l3loc, 1, REAL_SIZE, root, 200+iam, MPI_COMM_WORLD, ierror)
-!endif
+   endif
+enddo
 
 ! find the outer edge of the Roche lobes
-if ( iam_on_bottom ) then
-   do I = rlwb, rupb
-      if ( rhf(I) > rhm1(1) ) then
-         if ( rchpot(I,zlwb,phia) <= rpotcrit .and. rchpot(I+1,zlwb,phia) >= rpotcrit ) then
-            rochemax1 = rhf(I+1)
-            exit
-         endif
+do I = rlwb, rupb
+   if ( rhf(I) > rhm1(1) ) then
+      if ( rchpot(I,zlwb,phia) <= rpotcrit .and. rchpot(I+1,zlwb,phia) >= rpotcrit ) then
+         rochemax1 = rhf(I+1)
+         exit
       endif
-   enddo
-   do I = rlwb, rupb
-      if ( rhf(I) > rhm2(1) ) then
-         if ( rchpot(I,zlwb,phic) <= rpotcrit .and. rchpot(I+1,zlwb,phic) >= rpotcrit ) then
-            rochemax2 = rhf(I+1)
-            exit
-         endif
+   endif
+enddo
+do I = rlwb, rupb
+   if ( rhf(I) > rhm2(1) ) then
+      if ( rchpot(I,zlwb,phic) <= rpotcrit .and. rchpot(I+1,zlwb,phic) >= rpotcrit ) then
+         rochemax2 = rhf(I+1)
+         exit
       endif
-   enddo
-else
-   rochemax1 = 0.0
-   rochemax2 = 0.0
-endif
-!if ( iam_root ) then
-!   do I = 1, numprocs-1
-!      call mpi_recv(temp_rochemax1, 1, REAL_SIZE, I, 100+I, MPI_COMM_WORLD, istatus, ierror)
-!      call mpi_recv(temp_rochemax2, 1, REAL_SIZE, I, 200+I, MPI_COMM_WORLD, istatus, ierror)
-!      if ( temp_rochemax1 > 0.0 ) then
-!         rochemax1 = temp_rochemax1
-!      endif
-!      if ( temp_rochemax2 > 0.0 ) then
-!         rochemax2 = temp_rochemax2
-!      endif
-!   enddo
-!else
-!   call mpi_send(rochemax1, 1, REAL_SIZE, root, 100+iam, MPI_COMM_WORLD, ierror)
-!   call mpi_send(rochemax2, 1, REAL_SIZE, root, 200+iam, MPI_COMM_WORLD, ierror)
-!endif
+   endif
+enddo
 
 ! total up the volume in each Roche lobe
 volr1 = 0.0
 volr2 = 0.0
-global_volr1 = 0.0
-global_volr2 = 0.0
 if ( xcrit >= 0.0 ) then
    do K = philwb, phi1
       do J = zlwb, zupb
@@ -620,36 +530,18 @@ else
       enddo
    enddo
 endif
-!call mpi_reduce(volr1, global_volr1, 1, REAL_SIZE, MPI_SUM, root, MPI_COMM_WORLD, ierror)
-!call mpi_reduce(volr2, global_volr2, 1, REAL_SIZE, MPI_SUM, root, MPI_COMM_WORLD, ierror)
-if ( iam_root ) then
-   volr1 = volume_factor * volr1
-   volr2 = volume_factor * volr2
-   reffr1 = (0.75 * volr1 / pi)**(1.0/3.0)
-   reffr2 = (0.75 * volr2 / pi)**(1.0/3.0)
-endif
+volr1 = volume_factor * volr1
+volr2 = volume_factor * volr2
+reffr1 = (0.75 * volr1 / pi)**(1.0/3.0)
+reffr2 = (0.75 * volr2 / pi)**(1.0/3.0)
 
 ! find the outer edge of the star on the -ve x axis
-if ( iam_on_bottom ) then
-   star2maxr = 0.0
-   do I = rlwb, rupb
-      if  ( rho(I,zlwb,phic) > epsilon .and. rho(I+1,zlwb,phic) < epsilon ) then
-         star2maxr = rhf(I)
-      endif
-   enddo
-else
-   star2maxr = 0.0
-endif
-!if ( iam_root ) then
-!   do I = 1, numprocs-1
-!       call mpi_recv(temp_star2maxr, 1, REAL_SIZE, I, 100+I, MPI_COMM_WORLD, istatus, ierror)
-!       if ( temp_star2maxr > 0.0 ) then
-!          star2maxr = temp_star2maxr
-!       endif
-!   enddo
-!else
-!   call mpi_send(star2maxr, 1, REAL_SIZE, root, 100+iam, MPI_COMM_WORLD, ierror)
-!endif
+star2maxr = 0.0
+do I = rlwb, rupb
+   if  ( rho(I,zlwb,phic) > epsilon .and. rho(I+1,zlwb,phic) < epsilon ) then
+      star2maxr = rhf(I)
+   endif
+enddo
 
 if ( iam_root ) then
 

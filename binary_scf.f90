@@ -263,8 +263,10 @@ if ( iam_root ) then
    write(13,*) iam, 1, mass1(1), mass2(1), xavg1, xavg2, com, separation
 endif
 
-do Q = 2, maxit-1                                   ! START OF THE ITERATION CYCLE
+print*, 'maxit = ', maxit
 
+do Q = 2, maxit-1                                   ! START OF THE ITERATION CYCLE
+print*, q
    ! solve the Poisson equation for the current density field
    if ( Q == 2 ) then
       call potential_solver(0)
@@ -525,9 +527,9 @@ do Q = 2, maxit-1                                   ! START OF THE ITERATION CYC
       exit
    endif
 
-   if ( virial_error > virial_error_prev .and. Q > 10  ) then
-      exit
-   endif
+!   if ( virial_error > virial_error_prev .and. Q > 10  ) then
+!      exit
+!   endif
 
 enddo                                               ! END OF THE ITERATION CYCLE
 
