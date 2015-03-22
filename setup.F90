@@ -100,6 +100,7 @@ endif
 !            code and hydrocode.  if numr  = 128 in the scf code
 !            that translates to numr = 130 in the hydrocode
 dr = 1.0 / (numr - 3.0)
+!dr = 1.0 / (numr - 2.0)
 dz = dr
 dphi = 2.0 * pi * numphiinv
 drinv = 1.0 / dr

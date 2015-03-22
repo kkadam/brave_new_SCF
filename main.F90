@@ -42,8 +42,6 @@ common /processor_grid/ iam, numprocs, iam_on_top,           &
 !*
 !*   Local variables
 
-logical :: have_green_funcs
-
 integer, dimension(numr_procs*numz_procs,2) :: pe_coord
 
 integer :: one, two
@@ -76,6 +74,7 @@ real :: eps
 
 real :: pin
 
+logical ::have_green_funcs
 !*
 !************************************************************      
 !  Initialize MPI
@@ -193,8 +192,7 @@ endif
 row_num = pe_coord(iam+1,2)
  
 column_num = pe_coord(iam+1,1)
-
-have_green_funcs = .true.
+ have_green_funcs = .true.
 call setup( have_green_funcs )
 
 call cpu_time(time2)
@@ -214,7 +212,7 @@ phia = 1
 phib = 1
 phic = numphi / 2 + 1
 
-eps = 1.0e-5
+eps = 1.0e-4
 
 qfinal = 1
 

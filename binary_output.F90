@@ -629,4 +629,10 @@ if ( iam_root ) then
 
 endif
 
+
+open(unit=13,file="autoread.dat")
+write(13,*) pin, " ", pin, " ", pin, " ", pin, " ", numr, " ", numz, " ", numphi, " ",&
+     omega, " ", kappa1, " ", kappa1, " ", kappa2, " ", kappa2
+close(13)
+
 end subroutine binary_output

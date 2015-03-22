@@ -1,17 +1,19 @@
-       integer, parameter :: numr = 130
-       integer, parameter :: numz = 130
-       integer, parameter :: numphi = 256
+    integer, parameter :: numr = 258
+    integer, parameter :: numz = 258
+    integer, parameter :: numphi = 512
+
+      ! logical, parameter :: have_green_funcs = .false.
 
        integer, parameter :: numr_procs = 1
        integer, parameter :: numz_procs = 1
 
-       integer, parameter :: numr_dd = ( (numr - 2)/numr_procs ) + 2
+       integer, parameter :: numr_dd = ( (numr - 2)/numr_procs ) + 2     !numr
 
-       integer, parameter :: numz_dd = ( (numz - 2)/numz_procs ) + 2
+       integer, parameter :: numz_dd = ( (numz - 2)/numz_procs ) + 2     !numz 
 
-       integer, parameter :: rlwb = 2, rupb = numr_dd - 1
+       integer, parameter :: rlwb = 2, rupb = numr_dd - 1       !2, numr-1
 
-       integer, parameter :: zlwb = 2, zupb = numz_dd - 1
+       integer, parameter :: zlwb = 2, zupb = numz_dd - 1       !2, numz-1
 
        integer, parameter :: philwb = 1, phiupb = numphi
 
